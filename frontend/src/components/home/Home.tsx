@@ -50,7 +50,7 @@ function MockDashboard() {
       <Box sx={{ px: 2, py: 1.25, display: "flex", alignItems: "center", gap: 1.25, borderBottom: `1px solid ${theme.palette.divider}`, backgroundColor: L ? T.n50 : alpha("#fff", 0.025) }}>
         {["#ef4444","#f59e0b","#22c55e"].map(c => <Box key={c} sx={{ width: 9, height: 9, borderRadius: "50%", backgroundColor: c }} />)}
         <Box sx={{ flex: 1, mx: 2, height: 20, borderRadius: 0.75, backgroundColor: L ? T.n200 : alpha("#fff", 0.06), display: "flex", alignItems: "center", px: 1.5 }}>
-          <Typography sx={{ fontSize: "0.625rem", color: "text.disabled", fontFamily: "monospace" }}>app.pulsewatch.io/dashboard</Typography>
+          <Typography sx={{ fontSize: "0.625rem", color: "text.disabled", fontFamily: "monospace" }}>pulsewatch.hivarsoft.com/dashboard</Typography>
         </Box>
       </Box>
       {/* Content */}
