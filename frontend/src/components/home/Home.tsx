@@ -160,19 +160,19 @@ function Home() {
             <Box sx={{ position: "absolute", inset: -40, borderRadius: "50%", pointerEvents: "none", background: `radial-gradient(ellipse at center, ${alpha(p, L ? 0.14 : 0.24)} 0%, transparent 65%)`, filter: "blur(20px)" }} />
 
             {/* Floating pill top-left */}
-            <Box className="float-slow" sx={{ position: "absolute", top: -18, left: -14, zIndex: 2, px: 1.5, py: 0.875, borderRadius: 2, backgroundColor: theme.palette.background.paper, border: `1px solid ${alpha(T.up, 0.35)}`, boxShadow: `0 4px 16px ${alpha(T.up, 0.14)}`, display: "flex", alignItems: "center", gap: 0.875 }}>
+            <Box className="float-slow" sx={{ position: "absolute", top: -25, left: -14, zIndex: 2, px: 1.5, py: 0.875, borderRadius: 2, backgroundColor: theme.palette.background.paper, border: `1px solid ${alpha(T.up, 0.35)}`, boxShadow: `0 4px 16px ${alpha(T.up, 0.14)}`, display: "flex", alignItems: "center", gap: 0.875 }}>
               <Box sx={{ width: 7, height: 7, borderRadius: "50%", backgroundColor: T.up, boxShadow: `0 0 5px ${T.up}` }} />
               <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color: T.up }}>All systems operational</Typography>
             </Box>
 
             {/* Floating pill bottom-right */}
-            <Box className="float-fast" sx={{ position: "absolute", bottom: -12, right: -10, zIndex: 2, px: 1.5, py: 0.875, borderRadius: 2, backgroundColor: theme.palette.background.paper, border: `1px solid ${theme.palette.divider}`, boxShadow: `0 4px 14px ${alpha(p, 0.12)}`, display: "flex", alignItems: "center", gap: 0.75 }}>
+            <Box className="float-fast" sx={{ position: "absolute", bottom: -30, right: -10, zIndex: 2, px: 1.5, py: 0.875, borderRadius: 2, backgroundColor: theme.palette.background.paper, border: `1px solid ${theme.palette.divider}`, boxShadow: `0 4px 14px ${alpha(p, 0.12)}`, display: "flex", alignItems: "center", gap: 0.75 }}>
               <SpeedRounded sx={{ fontSize: 13, color: s }} />
-              <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color: "text.primary" }}>BullMQ · 50 workers</Typography>
+              <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color: "text.primary" }}>Scalable</Typography>
             </Box>
 
             {/* Alert pill */}
-            <Box className="float-med" sx={{ position: "absolute", top: "40%", right: -20, zIndex: 2, px: 1.25, py: 0.75, borderRadius: 2, backgroundColor: theme.palette.background.paper, border: `1px solid ${alpha(T.warn, 0.35)}`, boxShadow: `0 4px 14px ${alpha(T.warn, 0.12)}`, display: "flex", alignItems: "center", gap: 0.75 }}>
+            <Box className="float-med" sx={{ position: "absolute", top: 115, right: -20, zIndex: 2, px: 1.25, py: 0.75, borderRadius: 2, backgroundColor: theme.palette.background.paper, border: `1px solid ${alpha(T.warn, 0.35)}`, boxShadow: `0 4px 14px ${alpha(T.warn, 0.12)}`, display: "flex", alignItems: "center", gap: 0.75 }}>
               <MailOutlineRounded sx={{ fontSize: 13, color: T.warn }} />
               <Typography sx={{ fontSize: "0.7rem", fontWeight: 700, color: T.warn }}>Alert sent → Slack</Typography>
             </Box>
