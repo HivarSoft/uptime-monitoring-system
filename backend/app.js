@@ -11,9 +11,6 @@ const app = express();
 // CORS — allow both localhost dev ports and production
 const allowedOrigins = [
   "http://localhost:3000",
-  "http://localhost:5173",
-  "http://localhost:4173",
-  "https://uptime-monitoring-system.vercel.app",
   process.env.FRONTEND_URL,
 ].filter(Boolean);
 
