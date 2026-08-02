@@ -8,6 +8,9 @@ import { AuthProvider } from "./auth/AuthContext";
 import ProjectPage from "./components/dashboard/ProjectPage";
 import ServicePage from "./components/dashboard/ServicePage";
 import Settings from "./components/settings/SettingPage";
+import PrivacyPolicy from "./components/legal/PrivacyPolicy";
+import TermsOfService from "./components/legal/TermsOfService";
+import LoginPage from "./components/auth/LoginPage";
 
 function App() {
   return (
@@ -59,6 +62,26 @@ function App() {
                 <Settings />
               </Layout>
             </AuthProvider>
+          }
+        />
+        <Route
+          path="/login"
+          element={<LoginPage />}
+        />
+        <Route
+          path="/privacy"
+          element={
+            <Layout>
+              <PrivacyPolicy />
+            </Layout>
+          }
+        />
+        <Route
+          path="/terms"
+          element={
+            <Layout>
+              <TermsOfService />
+            </Layout>
           }
         />
       </Routes>
