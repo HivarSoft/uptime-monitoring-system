@@ -1,7 +1,7 @@
 import { Box, Button, Typography, Divider, IconButton, Tooltip } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
 import { MonitorHeart, LightMode, DarkMode, FiberManualRecord } from "@mui/icons-material";
-import { FaGoogle, FaGithub } from "react-icons/fa";
+import { FaGithub } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useThemeMode } from "../../theme/ThemeContext";
 import { T } from "../../theme/theme";
@@ -27,10 +27,9 @@ const SERVICES = [
 
 export default function LoginPage() {
   const theme   = useTheme();
-  const { mode, toggle } = useThemeMode();
+  const { toggle } = useThemeMode();
   const L       = theme.palette.mode === "light";
   const navigate = useNavigate();
-  const p       = theme.palette.primary.main;
 
   const handleOAuth = (provider: "google" | "github") => {
     window.location.href = `${AUTH_BASE}/api/v1/auth/${provider}`;
@@ -332,7 +331,7 @@ export default function LoginPage() {
               secure OAuth — no password required
             </Typography>
           </Divider>
-          
+
           {/* 
           <Box sx={{
             p: 2, borderRadius: 1.5,
