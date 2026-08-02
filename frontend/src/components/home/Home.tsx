@@ -6,11 +6,9 @@ import {
   ArrowForwardRounded, FiberManualRecord, TuneRounded,
   MailOutlineRounded, WebhookRounded, QueryStatsRounded,
 } from "@mui/icons-material";
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppSelector } from "../../redux/hooks";
-import { selectUser } from "../../redux/reducers/userReducer";
-import { SignUpDialog } from "../../layout/layout";
+import { selectAuthenticated } from "../../redux/reducers/userReducer";
 import { T } from "../../theme/theme";
 
 // ── Mock dashboard widget ────────────────────────────────────────────────────
@@ -86,17 +84,14 @@ function MockDashboard() {
 function Home() {
   const theme      = useTheme();
   const L          = theme.palette.mode === "light";
-  const navigate   = useNavigate();
-  const user       = useAppSelector(selectUser);
-  const isLoggedIn = !!user.token;
-  const [signUpOpen, setSignUpOpen] = useState(false);
-  const handleCTA = () => isLoggedIn ? navigate("/dashboard") : setSignUpOpen(true);
+  const navigate      = useNavigate();
+  const isLoggedIn    = useAppSelector(selectAuthenticated);
+  const handleCTA = () => isLoggedIn ? navigate("/dashboard") : navigate("/login");
   const p = theme.palette.primary.main;
   const s = theme.palette.secondary.main;
 
   return (
     <Box sx={{ overflowX: "hidden" }}>
-      <SignUpDialog open={signUpOpen} onClose={() => setSignUpOpen(false)} />
 
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
       <Box sx={{ position: "relative", minHeight: "100vh", display: "flex", alignItems: "center", pt: { xs: 4, md: 0 }, pb: { xs: 6, md: 0 }, overflow: "hidden" }}>
