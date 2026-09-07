@@ -3,7 +3,6 @@ import passport from "passport";
 import {
   oauthSuccess,
   checkLogin,
-  getCsrfToken,
   logout,
 } from "../controllers/authController.js";
 import { jwtAuthGuard } from "../middlewares/jwtAuthGuard.js";
@@ -64,9 +63,8 @@ router.get(
   oauthSuccess
 );
 
-// ── Session & CSRF ─────────────────────────────────────────────────────────────
+// ── Session ────────────────────────────────────────────────────────────────────
 router.get("/checkLogin", jwtAuthGuard, checkLogin);
-router.get("/csrf-token", jwtAuthGuard, getCsrfToken);
 router.post("/logout",    jwtAuthGuard, logout);
 
 export default router;

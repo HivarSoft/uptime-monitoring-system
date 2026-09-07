@@ -1,7 +1,6 @@
 import jwt from "jsonwebtoken";
 
 const COOKIE_NAME = "session_token";
-const CSRF_COOKIE_NAME = "csrf_token";
 
 /** Sign a short-lived access JWT */
 export const generateToken = (id, email, firstName, lastName) => {
@@ -22,34 +21,23 @@ export const generateRefreshToken = (id) => {
 };
 
 /**
- * Set the HttpOnly session cookie (access token) and the
- * readable CSRF cookie on the response.
+ * Set the HttpOnly session cookie (access token).
  */
-export const setAuthCookies = (res, accessToken, csrfToken) => {
+export const setAuthCookies = (res, accessToken) => {
   const isProd = process.env.NODE_ENV === "production";
 
   // HttpOnly — not accessible to JS, prevents XSS token theft
   res.cookie(COOKIE_NAME, accessToken, {
     httpOnly: true,
     secure:   isProd,
-    sameSite: isProd ? "none" : "lax", // Use "none" for cross-subdomain
+    sameSite: isProd ? "none" : "lax",
     maxAge:   60 * 60 * 1000, // 1 hour
     path:     "/",
-    domain:   isProd ? ".hivarsoft.com" : undefined, // Share across subdomains
-  });
-
-  // Readable by JS — used for double-submit CSRF pattern
-  res.cookie(CSRF_COOKIE_NAME, csrfToken, {
-    httpOnly: false,
-    secure:   isProd,
-    sameSite: isProd ? "none" : "lax", // Use "none" for cross-subdomain
-    maxAge:   60 * 60 * 1000,
-    path:     "/",
-    domain:   isProd ? ".hivarsoft.com" : undefined, // Share across subdomains
+    domain:   isProd ? ".hivarsoft.com" : undefined,
   });
 };
 
-/** Clear both auth cookies on logout */
+/** Clear auth cookies on logout */
 export const clearAuthCookies = (res) => {
   const isProd = process.env.NODE_ENV === "production";
   
@@ -62,7 +50,6 @@ export const clearAuthCookies = (res) => {
   };
   
   res.clearCookie(COOKIE_NAME, opts);
-  res.clearCookie(CSRF_COOKIE_NAME, { ...opts, httpOnly: false });
 };
 
-export { COOKIE_NAME, CSRF_COOKIE_NAME };
+export { COOKIE_NAME };

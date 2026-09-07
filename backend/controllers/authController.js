@@ -1,15 +1,12 @@
-import crypto from "crypto";
 import {
   generateToken,
   setAuthCookies,
   clearAuthCookies,
-  CSRF_COOKIE_NAME,
 } from "../helpers/authHelper.js";
 
 /**
  * Called after a successful OAuth callback (Google or GitHub).
- * Issues an HttpOnly JWT cookie + a readable CSRF cookie, then
- * redirects the browser back to the frontend dashboard.
+ * Issues an HttpOnly JWT cookie, then redirects the browser back to the frontend dashboard.
  */
 export const oauthSuccess = (req, res) => {
   try {
@@ -28,10 +25,7 @@ export const oauthSuccess = (req, res) => {
       user.lastName
     );
 
-    // Generate a random CSRF token for this session
-    const csrfToken = crypto.randomBytes(32).toString("hex");
-
-    setAuthCookies(res, accessToken, csrfToken);
+    setAuthCookies(res, accessToken);
 
     // Redirect to frontend — no sensitive data in the URL
     res.redirect(
@@ -63,21 +57,6 @@ export const checkLogin = (req, res) => {
     });
   }
   return res.status(401).json({ success: false, message: "Not authenticated" });
-};
-
-/**
- * Provides a fresh CSRF token to authenticated clients.
- * Called once after the OAuth redirect completes, so the frontend
- * can read the value from the cookie and attach it to mutation requests.
- */
-export const getCsrfToken = (req, res) => {
-  // The csrf_token cookie was already set during oauthSuccess.
-  // This endpoint just lets the client confirm it's there.
-  const token = req.cookies?.[CSRF_COOKIE_NAME];
-  if (!token) {
-    return res.status(401).json({ success: false, message: "No active session" });
-  }
-  return res.status(200).json({ success: true, csrfToken: token });
 };
 
 /**

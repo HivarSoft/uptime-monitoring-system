@@ -1,27 +1,11 @@
 /**
  * All API calls use:
  *  - `withCredentials: true` so the browser sends the HttpOnly session cookie
- *  - `x-csrf-token` header (read from the csrf_token cookie) on mutating requests
  *
  * No tokens are stored in localStorage.
  */
 import { BASE_URL } from "../../constants/BASE_URL";
 import axios, { AxiosError } from "axios";
-
-// ── CSRF helper ───────────────────────────────────────────────────────────────
-
-/** Read the csrf_token cookie value (set by the backend after OAuth login) */
-const getCsrfToken = (): string => {
-  return (
-    document.cookie
-      .split("; ")
-      .find((row) => row.startsWith("csrf_token="))
-      ?.split("=")[1] ?? ""
-  );
-};
-
-/** Headers for mutating requests (POST / PATCH / DELETE) */
-const csrfHeaders = () => ({ "x-csrf-token": getCsrfToken() });
 
 // ── Generic request wrapper ───────────────────────────────────────────────────
 
@@ -55,7 +39,7 @@ export const logout = () =>
       .post(
         `${BASE_URL}/auth/logout`,
         {},
-        { withCredentials: true, headers: csrfHeaders() }
+        { withCredentials: true }
       )
       .then((r) => r.data)
   );
@@ -78,7 +62,6 @@ export const updateUser = (payload: {
     axios
       .patch(`${BASE_URL}/user/updateUser`, payload, {
         withCredentials: true,
-        headers: csrfHeaders(),
       })
       .then((r) => r.data)
   );
@@ -98,7 +81,7 @@ export const getAllServices = (projectId: string) =>
       .post(
         `${BASE_URL}/service/getAllServices`,
         { projectId },
-        { withCredentials: true, headers: csrfHeaders() }
+        { withCredentials: true }
       )
       .then((r) => r.data)
   );
@@ -109,7 +92,7 @@ export const createProject = (projectName: string) =>
       .post(
         `${BASE_URL}/service/createProject`,
         { name: projectName },
-        { withCredentials: true, headers: csrfHeaders() }
+        { withCredentials: true }
       )
       .then((r) => r.data)
   );
@@ -124,7 +107,7 @@ export const createService = (
       .post(
         `${BASE_URL}/service/createService`,
         { serviceName, url, projectId },
-        { withCredentials: true, headers: csrfHeaders() }
+        { withCredentials: true }
       )
       .then((r) => r.data)
   );
@@ -147,7 +130,6 @@ export const deleteProject = (projectId: string) =>
     axios
       .delete(`${BASE_URL}/service/deleteProject/${projectId}`, {
         withCredentials: true,
-        headers: csrfHeaders(),
       })
       .then((r) => r.data)
   );
@@ -157,7 +139,6 @@ export const deleteService = (serviceId: string, projectId: string) =>
     axios
       .delete(`${BASE_URL}/service/deleteService/${serviceId}/${projectId}`, {
         withCredentials: true,
-        headers: csrfHeaders(),
       })
       .then((r) => r.data)
   );
@@ -178,7 +159,6 @@ export const createServiceAdvanced = (payload: {
     axios
       .post(`${BASE_URL}/service/createService`, payload, {
         withCredentials: true,
-        headers: csrfHeaders(),
       })
       .then((r) => r.data)
   );
@@ -199,7 +179,6 @@ export const updateService = (
     axios
       .patch(`${BASE_URL}/service/updateService/${serviceId}`, payload, {
         withCredentials: true,
-        headers: csrfHeaders(),
       })
       .then((r) => r.data)
   );
@@ -229,7 +208,6 @@ export const createAlertChannel = (payload: {
     axios
       .post(`${BASE_URL}/alerts`, payload, {
         withCredentials: true,
-        headers: csrfHeaders(),
       })
       .then((r) => r.data)
   );
@@ -242,7 +220,6 @@ export const updateAlertChannel = (
     axios
       .patch(`${BASE_URL}/alerts/${id}`, payload, {
         withCredentials: true,
-        headers: csrfHeaders(),
       })
       .then((r) => r.data)
   );
@@ -252,7 +229,6 @@ export const deleteAlertChannel = (id: string) =>
     axios
       .delete(`${BASE_URL}/alerts/${id}`, {
         withCredentials: true,
-        headers: csrfHeaders(),
       })
       .then((r) => r.data)
   );
@@ -263,7 +239,7 @@ export const testAlertChannel = (id: string) =>
       .post(
         `${BASE_URL}/alerts/${id}/test`,
         {},
-        { withCredentials: true, headers: csrfHeaders() }
+        { withCredentials: true }
       )
       .then((r) => r.data)
   );
