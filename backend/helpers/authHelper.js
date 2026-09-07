@@ -32,7 +32,7 @@ export const setAuthCookies = (res, accessToken, csrfToken) => {
   res.cookie(COOKIE_NAME, accessToken, {
     httpOnly: true,
     secure:   isProd,
-    sameSite: isProd ? "none" : "lax",
+    sameSite: isProd ? "strict" : "lax", // Use strict for same-domain production
     maxAge:   60 * 60 * 1000, // 1 hour
     path:     "/",
   });
@@ -41,7 +41,7 @@ export const setAuthCookies = (res, accessToken, csrfToken) => {
   res.cookie(CSRF_COOKIE_NAME, csrfToken, {
     httpOnly: false,
     secure:   isProd,
-    sameSite: isProd ? "none" : "lax",
+    sameSite: isProd ? "strict" : "lax", // Use strict for same-domain production
     maxAge:   60 * 60 * 1000,
     path:     "/",
   });
@@ -50,7 +50,14 @@ export const setAuthCookies = (res, accessToken, csrfToken) => {
 /** Clear both auth cookies on logout */
 export const clearAuthCookies = (res) => {
   const isProd = process.env.NODE_ENV === "production";
-  const opts = { httpOnly: true, secure: isProd, sameSite: isProd ? "none" : "lax", path: "/" };
+  
+  const opts = { 
+    httpOnly: true, 
+    secure: isProd, 
+    sameSite: isProd ? "strict" : "lax", // Use strict for same-domain production
+    path: "/" 
+  };
+  
   res.clearCookie(COOKIE_NAME, opts);
   res.clearCookie(CSRF_COOKIE_NAME, { ...opts, httpOnly: false });
 };
