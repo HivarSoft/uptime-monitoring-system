@@ -1,7 +1,7 @@
 /**
  * All API calls use:
  *  - `withCredentials: true` so the browser sends the HttpOnly session cookie
- *  - `X-CSRF-Token` header (read from the csrf_token cookie) on mutating requests
+ *  - `x-csrf-token` header (read from the csrf_token cookie) on mutating requests
  *
  * No tokens are stored in localStorage.
  */
@@ -21,7 +21,7 @@ const getCsrfToken = (): string => {
 };
 
 /** Headers for mutating requests (POST / PATCH / DELETE) */
-const csrfHeaders = () => ({ "X-CSRF-Token": getCsrfToken() });
+const csrfHeaders = () => ({ "x-csrf-token": getCsrfToken() });
 
 // ── Generic request wrapper ───────────────────────────────────────────────────
 
