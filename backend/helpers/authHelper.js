@@ -32,18 +32,20 @@ export const setAuthCookies = (res, accessToken, csrfToken) => {
   res.cookie(COOKIE_NAME, accessToken, {
     httpOnly: true,
     secure:   isProd,
-    sameSite: isProd ? "strict" : "lax", // Use strict for same-domain production
+    sameSite: isProd ? "none" : "lax", // Use "none" for cross-subdomain
     maxAge:   60 * 60 * 1000, // 1 hour
     path:     "/",
+    domain:   isProd ? ".hivarsoft.com" : undefined, // Share across subdomains
   });
 
   // Readable by JS — used for double-submit CSRF pattern
   res.cookie(CSRF_COOKIE_NAME, csrfToken, {
     httpOnly: false,
     secure:   isProd,
-    sameSite: isProd ? "strict" : "lax", // Use strict for same-domain production
+    sameSite: isProd ? "none" : "lax", // Use "none" for cross-subdomain
     maxAge:   60 * 60 * 1000,
     path:     "/",
+    domain:   isProd ? ".hivarsoft.com" : undefined, // Share across subdomains
   });
 };
 
@@ -54,8 +56,9 @@ export const clearAuthCookies = (res) => {
   const opts = { 
     httpOnly: true, 
     secure: isProd, 
-    sameSite: isProd ? "strict" : "lax", // Use strict for same-domain production
-    path: "/" 
+    sameSite: isProd ? "none" : "lax",
+    path: "/",
+    domain: isProd ? ".hivarsoft.com" : undefined,
   };
   
   res.clearCookie(COOKIE_NAME, opts);
