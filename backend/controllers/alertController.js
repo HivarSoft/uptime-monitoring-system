@@ -185,17 +185,25 @@ export const testAlertChannel = async (req, res) => {
         console.log("[testAlertChannel] Email config:", {
           smtpHost: config.smtpHost,
           smtpPort: config.smtpPort,
+          smtpPortType: typeof config.smtpPort,
           smtpUser: config.smtpUser,
           smtpPassLength: config.smtpPass?.length || 0,
           smtpPassExists: !!config.smtpPass,
+          smtpSecure: config.smtpSecure,
           fromEmail: config.fromEmail,
           toEmail: config.toEmail
         });
         
+        // Convert port to number if it's a string
+        const port = typeof config.smtpPort === 'string' ? parseInt(config.smtpPort, 10) : (config.smtpPort || 587);
+        
+        // If port is 465, use SSL (smtpSecure: true), otherwise use STARTTLS
+        const secure = port === 465 ? true : (config.smtpSecure ?? false);
+        
         const transporter = nodemailer.createTransport({
           host:   config.smtpHost,
-          port:   config.smtpPort || 587,
-          secure: config.smtpSecure ?? false,
+          port:   port,
+          secure: secure,
           auth:   { user: config.smtpUser, pass: config.smtpPass },
         });
         await transporter.verify();

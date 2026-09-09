@@ -33,9 +33,16 @@ const sendAlert = async (channel, payload) => {
     const { type, config } = channel;
 
     if (type === "email") {
+      // Convert port to number if it's a string
+      const port = typeof config.smtpPort === 'string' ? parseInt(config.smtpPort, 10) : (config.smtpPort || 587);
+      
+      // If port is 465, use SSL (smtpSecure: true), otherwise use STARTTLS
+      const secure = port === 465 ? true : (config.smtpSecure ?? false);
+      
       const transporter = nodemailer.createTransport({
-        host: config.smtpHost, port: config.smtpPort || 587,
-        secure: config.smtpSecure ?? false,
+        host: config.smtpHost,
+        port: port,
+        secure: secure,
         auth: { user: config.smtpUser, pass: config.smtpPass },
       });
       

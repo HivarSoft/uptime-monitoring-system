@@ -216,7 +216,14 @@ function CreateChannelDialog({ open, onClose, onCreated }: {
   const handleCreate = async () => {
     if (!name.trim()) { toast.error("Channel name is required"); return; }
     setLoading(true);
-    const res = await createAlertChannel({ name: name.trim(), type, config: cfg });
+    
+    // Convert smtpPort to number if it exists
+    const config = { ...cfg };
+    if (config.smtpPort) {
+      config.smtpPort = parseInt(config.smtpPort as string, 10);
+    }
+    
+    const res = await createAlertChannel({ name: name.trim(), type, config });
     setLoading(false);
     if (res.status === 200 || res.status === 201) {
       toast.success("Alert channel created"); onCreated(); reset();
