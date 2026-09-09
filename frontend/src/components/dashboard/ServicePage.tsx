@@ -41,11 +41,15 @@ interface ServiceData {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-type Preset = "24h" | "7d" | "30d" | "custom";
+type Preset = "6h" | "24h" | "7d" | "30d" | "custom";
 
 function presetRange(p: Preset) {
-  const now  = new Date();
-  const days = ({ "24h": 1, "7d": 7, "30d": 30 } as Record<string, number>)[p] ?? 7;
+  const now = new Date();
+  const hours = ({ "6h": 6, "24h": 24 } as Record<string, number>)[p];
+  if (hours) {
+    return { from: new Date(now.getTime() - hours * 3_600_000), to: now };
+  }
+  const days = ({ "7d": 7, "30d": 30 } as Record<string, number>)[p] ?? 7;
   return { from: new Date(now.getTime() - days * 86_400_000), to: now };
 }
 const toInput = (d: Date) => d.toISOString().slice(0, 16);
@@ -94,8 +98,8 @@ function ServicePage() {
   const [data,       setData]       = useState<ServiceData | null>(null);
   const [loading,    setLoading]    = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [preset,     setPreset]     = useState<Preset>("7d");
-  const [fromVal,    setFromVal]    = useState(() => toInput(presetRange("7d").from));
+  const [preset,     setPreset]     = useState<Preset>("6h");
+  const [fromVal,    setFromVal]    = useState(() => toInput(presetRange("6h").from));
   const [toVal,      setToVal]      = useState(() => toInput(new Date()));
 
   // keep stable ref for the interval so it reads latest preset/range
@@ -113,7 +117,7 @@ function ServicePage() {
   }, [id]);
 
   useEffect(() => {
-    const { from, to } = presetRange("7d");
+    const { from, to } = presetRange("6h");
     fetchData(false, from, to);
     const tick = setInterval(() => {
       const { preset: p, fromVal: f, toVal: t } = rangeRef.current;
@@ -296,7 +300,7 @@ function ServicePage() {
             </Typography>
             <ToggleButtonGroup value={preset} exclusive size="small"
               onChange={(_, v) => v && applyPreset(v as Preset)}>
-              {(["24h", "7d", "30d", "custom"] as Preset[]).map((v) => (
+              {(["6h", "24h", "7d", "30d", "custom"] as Preset[]).map((v) => (
                 <ToggleButton key={v} value={v}>{v === "custom" ? "Custom" : v}</ToggleButton>
               ))}
             </ToggleButtonGroup>
