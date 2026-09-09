@@ -207,7 +207,7 @@ function CreateChannelDialog({ open, onClose, onCreated }: {
 }) {
   const [name,    setName]    = useState("");
   const [type,    setType]    = useState<ChannelType>("email");
-  const [cfg,     setCfg]     = useState<Record<string, string>>({});
+  const [cfg,     setCfg]     = useState<Record<string, string | number>>({});
   const [loading, setLoading] = useState(false);
 
   const reset = () => { onClose(); setName(""); setType("email"); setCfg({}); };
@@ -219,8 +219,8 @@ function CreateChannelDialog({ open, onClose, onCreated }: {
     
     // Convert smtpPort to number if it exists
     const config = { ...cfg };
-    if (config.smtpPort) {
-      config.smtpPort = parseInt(config.smtpPort as string, 10);
+    if (config.smtpPort && typeof config.smtpPort === 'string') {
+      config.smtpPort = parseInt(config.smtpPort, 10);
     }
     
     const res = await createAlertChannel({ name: name.trim(), type, config });
