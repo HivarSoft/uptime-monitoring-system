@@ -256,14 +256,14 @@ function CreateChannelDialog({ open, onClose, onCreated }: {
 
         {/* Email fields */}
         {type === "email" && <>
-          <F label="Recipient email" value={cfg.toEmail ?? ""} onChange={(v) => set("toEmail", v)} placeholder="you@example.com" />
+          <F label="Recipient email" value={String(cfg.toEmail ?? "")} onChange={(v) => set("toEmail", v)} placeholder="you@example.com" />
           <Box sx={{ display: "flex", gap: 2 }}>
-            <F label="SMTP host" value={cfg.smtpHost ?? ""} onChange={(v) => set("smtpHost", v)} placeholder="smtp.resend.com" />
-            <F label="SMTP port" value={cfg.smtpPort ?? ""} onChange={(v) => set("smtpPort", v)} placeholder="587" />
+            <F label="SMTP host" value={String(cfg.smtpHost ?? "")} onChange={(v) => set("smtpHost", v)} placeholder="smtp.resend.com" />
+            <F label="SMTP port" value={String(cfg.smtpPort ?? "")} onChange={(v) => set("smtpPort", v)} placeholder="587" />
           </Box>
-          <F label="SMTP username" value={cfg.smtpUser ?? ""} onChange={(v) => set("smtpUser", v)} placeholder="resend or you@gmail.com" />
-          <F label="SMTP password / App password" value={cfg.smtpPass ?? ""} onChange={(v) => set("smtpPass", v)} type="password" placeholder="••••••••" />
-          <F label="From email (sender address)" value={cfg.fromEmail ?? ""} onChange={(v) => set("fromEmail", v)} placeholder="noreply@yourdomain.com" />
+          <F label="SMTP username" value={String(cfg.smtpUser ?? "")} onChange={(v) => set("smtpUser", v)} placeholder="resend or you@gmail.com" />
+          <F label="SMTP password / App password" value={String(cfg.smtpPass ?? "")} onChange={(v) => set("smtpPass", v)} type="password" placeholder="••••••••" />
+          <F label="From email (sender address)" value={String(cfg.fromEmail ?? "")} onChange={(v) => set("fromEmail", v)} placeholder="noreply@yourdomain.com" />
           <Typography variant="caption" color="text.disabled" sx={{ mt: -1, fontSize: "0.7rem" }}>
             For Gmail: enable 2FA and use an App Password. <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noreferrer">Generate one here</a>
             <br />For Resend: fromEmail is required and must be from a verified domain.
@@ -272,7 +272,7 @@ function CreateChannelDialog({ open, onClose, onCreated }: {
 
         {/* Slack / Discord / Webhook */}
         {(type === "slack" || type === "discord" || type === "webhook") && (
-          <F label="Webhook URL" value={cfg.webhookUrl ?? ""} onChange={(v) => set("webhookUrl", v)}
+          <F label="Webhook URL" value={String(cfg.webhookUrl ?? "")} onChange={(v) => set("webhookUrl", v)}
             placeholder={
               type === "slack"   ? "https://hooks.slack.com/services/…" :
               type === "discord" ? "https://discord.com/api/webhooks/…" :
@@ -283,8 +283,8 @@ function CreateChannelDialog({ open, onClose, onCreated }: {
 
         {/* Telegram */}
         {type === "telegram" && <>
-          <F label="Bot token" value={cfg.botToken ?? ""} onChange={(v) => set("botToken", v)} placeholder="123456:ABC-DEF…" type="password" />
-          <F label="Chat ID" value={cfg.chatId ?? ""} onChange={(v) => set("chatId", v)} placeholder="-100123456789" />
+          <F label="Bot token" value={String(cfg.botToken ?? "")} onChange={(v) => set("botToken", v)} placeholder="123456:ABC-DEF…" type="password" />
+          <F label="Chat ID" value={String(cfg.chatId ?? "")} onChange={(v) => set("chatId", v)} placeholder="-100123456789" />
           <Typography variant="caption" color="text.disabled" sx={{ mt: -1, fontSize: "0.7rem" }}>
             Create a bot via @BotFather, then get the chat ID by messaging @userinfobot.
           </Typography>
