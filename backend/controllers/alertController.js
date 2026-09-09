@@ -1,12 +1,13 @@
 import AlertChannel from "../models/AlertChannel.js";
 import nodemailer from "nodemailer";
 import axios from "axios";
+import { Resend } from "resend";
 
 // ── List all channels for the current user ────────────────────────────────────
 export const getAlertChannels = async (req, res) => {
   try {
     const channels = await AlertChannel.find({ userId: req.user.id })
-      .select("-config.smtpPass -config.botToken") // never expose secrets in list
+      .select("-config.smtpPass -config.botToken -config.apiKey") // never expose secrets in list
       .sort({ createdAt: -1 })
       .lean();
 
@@ -31,6 +32,7 @@ export const getAlertChannelById = async (req, res) => {
     // Mask credential fields
     if (channel.config?.smtpPass) channel.config.smtpPass = "••••••••";
     if (channel.config?.botToken) channel.config.botToken = "••••••••";
+    if (channel.config?.apiKey) channel.config.apiKey = "••••••••";
 
     return res.status(200).json({ success: true, channel });
   } catch (err) {
@@ -56,38 +58,53 @@ export const createAlertChannel = async (req, res) => {
     }
 
     // Minimal validation per type
-    if (type === "email" && (!config?.smtpHost || !config?.smtpUser || !config?.smtpPass || !config?.toEmail)) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Email channels require smtpHost, smtpUser, smtpPass, and toEmail. For Resend SMTP, fromEmail is also required." 
-      });
-    }
-    
-    // Validate email format if provided
     if (type === "email") {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       const toEmail = (config?.toEmail || '').trim();
+      const provider = config?.emailProvider || 'smtp';
       
       if (!emailRegex.test(toEmail)) {
         return res.status(400).json({ success: false, message: "Invalid toEmail address format" });
       }
       
-      // For Resend-like services (smtpUser is not an email), fromEmail is required
-      const smtpUserIsEmail = emailRegex.test((config?.smtpUser || '').trim());
-      if (!smtpUserIsEmail && !config?.fromEmail) {
-        return res.status(400).json({ 
-          success: false, 
-          message: "fromEmail is required when smtpUser is not a valid email (e.g., for Resend SMTP, use a verified domain email)" 
-        });
-      }
-      
-      // Validate fromEmail if provided
-      if (config?.fromEmail) {
-        const fromEmail = config.fromEmail.trim();
-        if (!emailRegex.test(fromEmail)) {
+      // Validate based on provider
+      if (provider === 'resend') {
+        // Resend API requires: apiKey, fromEmail, toEmail
+        if (!config?.apiKey) {
           return res.status(400).json({ 
             success: false, 
-            message: "Invalid fromEmail address format. Use: email@yourdomain.com (must be verified in Resend)" 
+            message: "Resend API requires: apiKey, fromEmail, and toEmail. Get your API key from https://resend.com/api-keys" 
+          });
+        }
+        if (!config?.fromEmail || !emailRegex.test(config.fromEmail.trim())) {
+          return res.status(400).json({ 
+            success: false, 
+            message: "Valid fromEmail is required for Resend (must be from a verified domain in your Resend account)" 
+          });
+        }
+      } else {
+        // SMTP requires: smtpHost, smtpUser, smtpPass, toEmail
+        if (!config?.smtpHost || !config?.smtpUser || !config?.smtpPass) {
+          return res.status(400).json({ 
+            success: false, 
+            message: "SMTP requires: smtpHost, smtpUser, smtpPass, and toEmail. Note: Railway blocks SMTP on Free/Hobby plans - use Resend API instead." 
+          });
+        }
+        
+        // For Resend-like SMTP services (smtpUser is not an email), fromEmail is required
+        const smtpUserIsEmail = emailRegex.test((config?.smtpUser || '').trim());
+        if (!smtpUserIsEmail && !config?.fromEmail) {
+          return res.status(400).json({ 
+            success: false, 
+            message: "fromEmail is required when smtpUser is not a valid email (e.g., for Resend SMTP, use a verified domain email)" 
+          });
+        }
+        
+        // Validate fromEmail if provided
+        if (config?.fromEmail && !emailRegex.test(config.fromEmail.trim())) {
+          return res.status(400).json({ 
+            success: false, 
+            message: "Invalid fromEmail address format. Use: email@yourdomain.com" 
           });
         }
       }
@@ -112,6 +129,7 @@ export const createAlertChannel = async (req, res) => {
     const safe = channel.toObject();
     if (safe.config?.smtpPass) safe.config.smtpPass = "••••••••";
     if (safe.config?.botToken) safe.config.botToken = "••••••••";
+    if (safe.config?.apiKey) safe.config.apiKey = "••••••••";
 
     return res.status(201).json({ success: true, channel: safe });
   } catch (err) {
@@ -182,76 +200,86 @@ export const testAlertChannel = async (req, res) => {
 
     try {
       if (type === "email") {
+        const provider = config.emailProvider || 'smtp';
+        
         console.log("[testAlertChannel] Email config:", {
-          smtpHost: config.smtpHost,
-          smtpPort: config.smtpPort,
-          smtpPortType: typeof config.smtpPort,
-          smtpUser: config.smtpUser,
-          smtpPassLength: config.smtpPass?.length || 0,
-          smtpPassExists: !!config.smtpPass,
-          smtpSecure: config.smtpSecure,
+          provider,
           fromEmail: config.fromEmail,
-          toEmail: config.toEmail
+          toEmail: config.toEmail,
+          ...(provider === 'resend' ? { apiKeyLength: config.apiKey?.length } : {
+            smtpHost: config.smtpHost,
+            smtpPort: config.smtpPort,
+            smtpUser: config.smtpUser,
+          })
         });
         
-        // Convert port to number if it's a string
-        const port = typeof config.smtpPort === 'string' ? parseInt(config.smtpPort, 10) : (config.smtpPort || 587);
-        
-        // If port is 465, use SSL (smtpSecure: true), otherwise use STARTTLS
-        const secure = port === 465 ? true : (config.smtpSecure ?? false);
-        
-        console.log("[testAlertChannel] Creating transporter with:", {
-          host: config.smtpHost,
-          port: port,
-          secure: secure,
-          user: config.smtpUser
-        });
-        
-        const transporter = nodemailer.createTransport({
-          host:   config.smtpHost,
-          port:   port,
-          secure: secure,
-          auth:   { user: config.smtpUser, pass: config.smtpPass },
-          connectionTimeout: 10000, // 10 second timeout
-          greetingTimeout: 5000,
-          socketTimeout: 15000,
-        });
-        
-        console.log("[testAlertChannel] Attempting to verify connection...");
-        await transporter.verify();
-        console.log("[testAlertChannel] Connection verified successfully!");
-        
-        // For Resend and similar services, fromEmail is REQUIRED since smtpUser is not an email
-        let fromEmail = config.fromEmail;
-        
-        // If no fromEmail provided, fallback to smtpUser (for traditional SMTP)
-        if (!fromEmail) {
-          fromEmail = config.smtpUser;
+        if (provider === 'resend') {
+          // Use Resend API (works on Railway)
+          const resend = new Resend(config.apiKey);
+          
+          const { data, error } = await resend.emails.send({
+            from: `PulseWatch <${config.fromEmail}>`,
+            to: [config.toEmail],
+            subject: testMsg.subject,
+            html: testMsg.html,
+          });
+          
+          if (error) {
+            throw new Error(`Resend API error: ${error.message || JSON.stringify(error)}`);
+          }
+          
+          console.log("[testAlertChannel] Resend API response:", data);
+          success = true;
+          message = `Test email sent via Resend API to ${config.toEmail}`;
+          
+        } else {
+          // Use SMTP (blocked on Railway Free/Hobby)
+          const port = typeof config.smtpPort === 'string' ? parseInt(config.smtpPort, 10) : (config.smtpPort || 587);
+          const secure = port === 465 ? true : (config.smtpSecure ?? false);
+          
+          console.log("[testAlertChannel] Creating SMTP transporter with:", {
+            host: config.smtpHost,
+            port: port,
+            secure: secure,
+            user: config.smtpUser
+          });
+          
+          const transporter = nodemailer.createTransport({
+            host:   config.smtpHost,
+            port:   port,
+            secure: secure,
+            auth:   { user: config.smtpUser, pass: config.smtpPass },
+            connectionTimeout: 10000,
+            greetingTimeout: 5000,
+            socketTimeout: 15000,
+          });
+          
+          console.log("[testAlertChannel] Attempting to verify SMTP connection...");
+          await transporter.verify();
+          console.log("[testAlertChannel] SMTP connection verified successfully!");
+          
+          let fromEmail = config.fromEmail || config.smtpUser;
+          fromEmail = fromEmail?.trim();
+          
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          const emailToValidate = fromEmail.replace(/.*<(.+)>.*/, '$1');
+          
+          if (!emailRegex.test(emailToValidate)) {
+            throw new Error(`Invalid or missing fromEmail address: "${fromEmail}"`);
+          }
+          
+          const from = fromEmail.includes('<') ? fromEmail : `PulseWatch <${fromEmail}>`;
+          
+          await transporter.sendMail({
+            from: from,
+            to:   config.toEmail,
+            subject: testMsg.subject,
+            html:    testMsg.html,
+            text:    testMsg.text,
+          });
+          success = true;
+          message = `Test email sent via SMTP to ${config.toEmail}`;
         }
-        
-        // Clean up any whitespace
-        fromEmail = fromEmail?.trim();
-        
-        // Validate email format
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const emailToValidate = fromEmail.replace(/.*<(.+)>.*/, '$1'); // Extract email from "Name <email>"
-        
-        if (!emailRegex.test(emailToValidate)) {
-          throw new Error(`Invalid or missing fromEmail address. For Resend SMTP, fromEmail must be a verified email address (e.g., noreply@yourdomain.com), not "${fromEmail}"`);
-        }
-        
-        // Format as "Name <email@domain.com>" if not already formatted
-        const from = fromEmail.includes('<') ? fromEmail : `PulseWatch <${fromEmail}>`;
-        
-        await transporter.sendMail({
-          from: from,
-          to:   config.toEmail,
-          subject: testMsg.subject,
-          html:    testMsg.html,
-          text:    testMsg.text,
-        });
-        success = true;
-        message = `Test email sent to ${config.toEmail}`;
       }
 
       if (type === "slack" || type === "discord" || type === "webhook") {

@@ -31,14 +31,18 @@ const AlertChannel = new Schema(
 
     // ── Type-specific config (all optional, only relevant fields populated) ──
     config: {
-      // email
+      // email - API-based (Resend, SendGrid, etc.)
+      emailProvider: { type: String, enum: ['smtp', 'resend'], default: 'smtp' }, // 'smtp' or 'resend'
+      apiKey:     { type: String },   // For Resend API (use instead of SMTP on Railway)
       toEmail:    { type: String },   // recipient address
+      fromEmail:  { type: String },   // sender address
+      
+      // email - SMTP (traditional, blocked on Railway Free/Hobby)
       smtpHost:   { type: String },
       smtpPort:   { type: Number },
       smtpUser:   { type: String },
       smtpPass:   { type: String },   // stored as-is; encrypt at rest in production
       smtpSecure: { type: Boolean, default: false }, // false = STARTTLS (587), true = SSL (465)
-      fromEmail:  { type: String },
 
       // webhook / slack / discord
       webhookUrl: { type: String },

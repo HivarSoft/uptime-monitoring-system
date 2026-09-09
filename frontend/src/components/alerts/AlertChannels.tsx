@@ -31,11 +31,11 @@ interface Channel {
 // ── Icon per type ─────────────────────────────────────────────────────────────
 
 const TYPE_META: Record<ChannelType, { label: string; color: string; icon: React.ReactNode }> = {
-  email:    { label: "Email (SMTP)",     color: "#7c3aed", icon: <EmailRounded sx={{ fontSize: 16 }} /> },
-  slack:    { label: "Slack",            color: "#4a154b", icon: <SmartToyRounded sx={{ fontSize: 16 }} /> },
-  discord:  { label: "Discord",         color: "#5865f2", icon: <SmartToyRounded sx={{ fontSize: 16 }} /> },
-  webhook:  { label: "Webhook",         color: "#0891b2", icon: <WebhookRounded sx={{ fontSize: 16 }} /> },
-  telegram: { label: "Telegram",        color: "#229ed9", icon: <SmartToyRounded sx={{ fontSize: 16 }} /> },
+  email:    { label: "Email",                color: "#7c3aed", icon: <EmailRounded sx={{ fontSize: 16 }} /> },
+  slack:    { label: "Slack",                color: "#4a154b", icon: <SmartToyRounded sx={{ fontSize: 16 }} /> },
+  discord:  { label: "Discord",              color: "#5865f2", icon: <SmartToyRounded sx={{ fontSize: 16 }} /> },
+  webhook:  { label: "Webhook",              color: "#0891b2", icon: <WebhookRounded sx={{ fontSize: 16 }} /> },
+  telegram: { label: "Telegram",             color: "#229ed9", icon: <SmartToyRounded sx={{ fontSize: 16 }} /> },
 };
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -207,10 +207,11 @@ function CreateChannelDialog({ open, onClose, onCreated }: {
 }) {
   const [name,    setName]    = useState("");
   const [type,    setType]    = useState<ChannelType>("email");
+  const [emailProvider, setEmailProvider] = useState<'smtp' | 'resend'>('resend'); // Default to Resend for Railway
   const [cfg,     setCfg]     = useState<Record<string, string | number>>({});
   const [loading, setLoading] = useState(false);
 
-  const reset = () => { onClose(); setName(""); setType("email"); setCfg({}); };
+  const reset = () => { onClose(); setName(""); setType("email"); setEmailProvider('resend'); setCfg({}); };
   const set = (k: string, v: string) => setCfg((c) => ({ ...c, [k]: v }));
 
   const handleCreate = async () => {
@@ -218,7 +219,7 @@ function CreateChannelDialog({ open, onClose, onCreated }: {
     setLoading(true);
     
     // Convert smtpPort to number if it exists
-    const config = { ...cfg };
+    const config: Record<string, any> = { ...cfg, emailProvider };
     if (config.smtpPort && typeof config.smtpPort === 'string') {
       config.smtpPort = parseInt(config.smtpPort, 10);
     }
@@ -256,18 +257,46 @@ function CreateChannelDialog({ open, onClose, onCreated }: {
 
         {/* Email fields */}
         {type === "email" && <>
-          <F label="Recipient email" value={String(cfg.toEmail ?? "")} onChange={(v) => set("toEmail", v)} placeholder="you@example.com" />
-          <Box sx={{ display: "flex", gap: 2 }}>
-            <F label="SMTP host" value={String(cfg.smtpHost ?? "")} onChange={(v) => set("smtpHost", v)} placeholder="smtp.resend.com" />
-            <F label="SMTP port" value={String(cfg.smtpPort ?? "")} onChange={(v) => set("smtpPort", v)} placeholder="587" />
+          {/* Email provider selector */}
+          <Box>
+            <Typography variant="caption" color="text.secondary" fontWeight={500} display="block" mb={0.75}>
+              Email Provider
+            </Typography>
+            <Select value={emailProvider} onChange={(e) => { setEmailProvider(e.target.value as 'smtp' | 'resend'); setCfg({}); }}
+              fullWidth size="small">
+              <MenuItem value="resend">Resend API (recommended for Railway)</MenuItem>
+              <MenuItem value="smtp">SMTP (blocked on Railway Free/Hobby)</MenuItem>
+            </Select>
+            <Typography variant="caption" color="text.disabled" sx={{ fontSize: "0.7rem", display: "block", mt: 0.5 }}>
+              {emailProvider === 'resend' ? '✅ Works on all Railway plans (uses HTTPS port 443)' : '⚠️ Requires Railway Pro plan (SMTP ports blocked on Free/Hobby)'}
+            </Typography>
           </Box>
-          <F label="SMTP username" value={String(cfg.smtpUser ?? "")} onChange={(v) => set("smtpUser", v)} placeholder="resend or you@gmail.com" />
-          <F label="SMTP password / App password" value={String(cfg.smtpPass ?? "")} onChange={(v) => set("smtpPass", v)} type="password" placeholder="••••••••" />
-          <F label="From email (sender address)" value={String(cfg.fromEmail ?? "")} onChange={(v) => set("fromEmail", v)} placeholder="noreply@yourdomain.com" />
-          <Typography variant="caption" color="text.disabled" sx={{ mt: -1, fontSize: "0.7rem" }}>
-            For Gmail: enable 2FA and use an App Password. <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noreferrer">Generate one here</a>
-            <br />For Resend: fromEmail is required and must be from a verified domain.
-          </Typography>
+          
+          <F label="Recipient email" value={String(cfg.toEmail ?? "")} onChange={(v) => set("toEmail", v)} placeholder="you@example.com" />
+          
+          {emailProvider === 'resend' ? (
+            <>
+              <F label="Resend API Key" value={String(cfg.apiKey ?? "")} onChange={(v) => set("apiKey", v)} type="password" placeholder="re_..." />
+              <F label="From email (sender address)" value={String(cfg.fromEmail ?? "")} onChange={(v) => set("fromEmail", v)} placeholder="noreply@yourdomain.com" />
+              <Typography variant="caption" color="text.disabled" sx={{ mt: -1, fontSize: "0.7rem" }}>
+                Get your API key from <a href="https://resend.com/api-keys" target="_blank" rel="noreferrer">resend.com/api-keys</a>.
+                <br />From email must be from a domain you've verified in Resend.
+              </Typography>
+            </>
+          ) : (
+            <>
+              <Box sx={{ display: "flex", gap: 2 }}>
+                <F label="SMTP host" value={String(cfg.smtpHost ?? "")} onChange={(v) => set("smtpHost", v)} placeholder="smtp.gmail.com" />
+                <F label="SMTP port" value={String(cfg.smtpPort ?? "")} onChange={(v) => set("smtpPort", v)} placeholder="587" />
+              </Box>
+              <F label="SMTP username" value={String(cfg.smtpUser ?? "")} onChange={(v) => set("smtpUser", v)} placeholder="you@gmail.com" />
+              <F label="SMTP password / App password" value={String(cfg.smtpPass ?? "")} onChange={(v) => set("smtpPass", v)} type="password" placeholder="••••••••" />
+              <F label="From email (sender address)" value={String(cfg.fromEmail ?? "")} onChange={(v) => set("fromEmail", v)} placeholder="noreply@yourdomain.com" />
+              <Typography variant="caption" color="text.disabled" sx={{ mt: -1, fontSize: "0.7rem" }}>
+                For Gmail: enable 2FA and use an <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noreferrer">App Password</a>.
+              </Typography>
+            </>
+          )}
         </>}
 
         {/* Slack / Discord / Webhook */}

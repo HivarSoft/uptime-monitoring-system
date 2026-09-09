@@ -3,6 +3,7 @@ import Service from "../models/Service.js";
 import AlertChannel from "../models/AlertChannel.js";
 import axios from "axios";
 import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
 const CONCURRENCY_LIMIT   = 50;
 const REQUEST_TIMEOUT_MS  = 10_000;
@@ -33,42 +34,50 @@ const sendAlert = async (channel, payload) => {
     const { type, config } = channel;
 
     if (type === "email") {
-      // Convert port to number if it's a string
-      const port = typeof config.smtpPort === 'string' ? parseInt(config.smtpPort, 10) : (config.smtpPort || 587);
+      const provider = config.emailProvider || 'smtp';
       
-      // If port is 465, use SSL (smtpSecure: true), otherwise use STARTTLS
-      const secure = port === 465 ? true : (config.smtpSecure ?? false);
-      
-      const transporter = nodemailer.createTransport({
-        host: config.smtpHost,
-        port: port,
-        secure: secure,
-        auth: { user: config.smtpUser, pass: config.smtpPass },
-        connectionTimeout: 10000, // 10 second timeout
-        greetingTimeout: 5000,
-        socketTimeout: 15000,
-      });
-      
-      // For Resend and similar services, fromEmail is REQUIRED since smtpUser is not an email
-      let fromEmail = config.fromEmail;
-      
-      // If no fromEmail provided, fallback to smtpUser (for traditional SMTP)
-      if (!fromEmail) {
-        fromEmail = config.smtpUser;
+      if (provider === 'resend') {
+        // Use Resend API (works on Railway)
+        const resend = new Resend(config.apiKey);
+        
+        const { error } = await resend.emails.send({
+          from: `PulseWatch <${config.fromEmail}>`,
+          to: [config.toEmail],
+          subject: payload.subject,
+          html: payload.html,
+        });
+        
+        if (error) {
+          throw new Error(`Resend API error: ${error.message || JSON.stringify(error)}`);
+        }
+        return;
+        
+      } else {
+        // Use SMTP (blocked on Railway Free/Hobby)
+        const port = typeof config.smtpPort === 'string' ? parseInt(config.smtpPort, 10) : (config.smtpPort || 587);
+        const secure = port === 465 ? true : (config.smtpSecure ?? false);
+        
+        const transporter = nodemailer.createTransport({
+          host: config.smtpHost,
+          port: port,
+          secure: secure,
+          auth: { user: config.smtpUser, pass: config.smtpPass },
+          connectionTimeout: 10000,
+          greetingTimeout: 5000,
+          socketTimeout: 15000,
+        });
+        
+        let fromEmail = config.fromEmail || config.smtpUser;
+        fromEmail = fromEmail?.trim();
+        const from = fromEmail.includes('<') ? fromEmail : `PulseWatch <${fromEmail}>`;
+        
+        await transporter.sendMail({
+          from: from,
+          to: config.toEmail,
+          subject: payload.subject, html: payload.html, text: payload.text,
+        });
+        return;
       }
-      
-      // Clean up any whitespace
-      fromEmail = fromEmail?.trim();
-      
-      // Format as "Name <email@domain.com>" if not already formatted
-      const from = fromEmail.includes('<') ? fromEmail : `PulseWatch <${fromEmail}>`;
-      
-      await transporter.sendMail({
-        from: from,
-        to: config.toEmail,
-        subject: payload.subject, html: payload.html, text: payload.text,
-      });
-      return;
     }
 
     if (["slack", "discord", "webhook"].includes(type)) {
