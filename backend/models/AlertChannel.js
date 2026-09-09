@@ -37,7 +37,7 @@ const AlertChannel = new Schema(
       smtpPort:   { type: Number },
       smtpUser:   { type: String },
       smtpPass:   { type: String },   // stored as-is; encrypt at rest in production
-      smtpSecure: { type: Boolean, default: true },
+      smtpSecure: { type: Boolean, default: false }, // false = STARTTLS (587), true = SSL (465)
       fromEmail:  { type: String },
 
       // webhook / slack / discord
