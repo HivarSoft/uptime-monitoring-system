@@ -54,7 +54,10 @@ export const createAlertChannel = async (req, res) => {
 
     // Minimal validation per type
     if (type === "email" && (!config?.smtpHost || !config?.smtpUser || !config?.smtpPass || !config?.toEmail)) {
-      return res.status(400).json({ success: false, message: "Email channels require smtpHost, smtpUser, smtpPass, and toEmail" });
+      return res.status(400).json({ 
+        success: false, 
+        message: "Email channels require smtpHost, smtpUser, smtpPass, and toEmail. Optional: fromEmail (defaults to smtpUser)" 
+      });
     }
     if (["webhook", "slack", "discord"].includes(type) && !config?.webhookUrl) {
       return res.status(400).json({ success: false, message: `${type} channels require a webhookUrl` });
@@ -152,8 +155,13 @@ export const testAlertChannel = async (req, res) => {
           auth:   { user: config.smtpUser, pass: config.smtpPass },
         });
         await transporter.verify();
+        
+        // Ensure from field is properly formatted for Resend
+        const fromEmail = config.fromEmail || config.smtpUser;
+        const from = fromEmail.includes('<') ? fromEmail : `PulseWatch <${fromEmail}>`;
+        
         await transporter.sendMail({
-          from: config.fromEmail || config.smtpUser,
+          from: from,
           to:   config.toEmail,
           subject: testMsg.subject,
           html:    testMsg.html,

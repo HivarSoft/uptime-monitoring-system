@@ -38,8 +38,13 @@ const sendAlert = async (channel, payload) => {
         secure: config.smtpSecure ?? false,
         auth: { user: config.smtpUser, pass: config.smtpPass },
       });
+      
+      // Ensure from field is properly formatted for Resend
+      const fromEmail = config.fromEmail || config.smtpUser;
+      const from = fromEmail.includes('<') ? fromEmail : `PulseWatch <${fromEmail}>`;
+      
       await transporter.sendMail({
-        from: config.fromEmail || config.smtpUser,
+        from: from,
         to: config.toEmail,
         subject: payload.subject, html: payload.html, text: payload.text,
       });
