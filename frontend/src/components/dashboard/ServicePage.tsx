@@ -4,10 +4,11 @@ import {
 } from "@mui/icons-material";
 import {
   Box, Typography, Skeleton, IconButton, Tooltip,
-  LinearProgress, Grid, TextField, Button,
+  LinearProgress, Grid, Button, TextField,
   ToggleButtonGroup, ToggleButton, Divider,
   Dialog, DialogTitle, DialogContent, DialogActions,
   Switch, FormControlLabel, Chip, CircularProgress,
+  Popover, Paper,
 } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
 import { useEffect, useState, useCallback, useRef } from "react";
@@ -17,6 +18,10 @@ import { Stats } from "./charts/MainStats";
 import DeleteDialog from "../dialog/DeleteDialog";
 import { T } from "../../theme/theme";
 import { toast } from "react-toastify";
+import { DateRangePicker } from "react-date-range";
+import "react-date-range/dist/styles.css";
+import "react-date-range/dist/theme/default.css";
+import "./dateRangePicker.css";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -101,6 +106,7 @@ function ServicePage() {
   const [preset,     setPreset]     = useState<Preset>("6h");
   const [fromVal,    setFromVal]    = useState(() => toInput(presetRange("6h").from));
   const [toVal,      setToVal]      = useState(() => toInput(new Date()));
+  const [datePickerAnchor, setDatePickerAnchor] = useState<HTMLButtonElement | null>(null);
 
   // keep stable ref for the interval so it reads latest preset/range
   const rangeRef = useRef({ preset, fromVal, toVal });
@@ -140,6 +146,14 @@ function ServicePage() {
   const applyCustom = () => {
     setPreset("custom");
     fetchData(false, new Date(fromVal), new Date(toVal));
+    setDatePickerAnchor(null); // Close popover after applying
+  };
+
+  const handleDateRangeChange = (ranges: any) => {
+    const { startDate, endDate } = ranges.selection;
+    setFromVal(toInput(startDate));
+    setToVal(toInput(endDate));
+    setPreset("custom");
   };
 
   const doRefresh = () => {
@@ -307,14 +321,57 @@ function ServicePage() {
           </Box>
 
           <Box sx={{ display: "flex", alignItems: "flex-end", gap: 1, flexWrap: "wrap" }}>
-            <DateField label="From" value={fromVal} max={toVal}
-              onChange={(v) => { setFromVal(v); setPreset("custom"); }} />
-            <DateField label="To" value={toVal} min={fromVal}
-              onChange={(v) => { setToVal(v); setPreset("custom"); }} />
-            <Button onClick={applyCustom} variant="contained" size="small"
-              startIcon={<CalendarToday sx={{ fontSize: 13 }} />}>
-              Apply
+            <Button 
+              onClick={(e) => setDatePickerAnchor(e.currentTarget)}
+              variant={preset === "custom" ? "contained" : "outlined"}
+              size="small"
+              startIcon={<CalendarToday sx={{ fontSize: 13 }} />}
+            >
+              {preset === "custom" 
+                ? `${new Date(fromVal).toLocaleDateString()} - ${new Date(toVal).toLocaleDateString()}`
+                : "Pick Date Range"}
             </Button>
+            
+            <Popover
+              open={Boolean(datePickerAnchor)}
+              anchorEl={datePickerAnchor}
+              onClose={() => setDatePickerAnchor(null)}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+              transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+              sx={{ mt: 1 }}
+            >
+              <Paper sx={{ p: 2 }}>
+                <DateRangePicker
+                  ranges={[{
+                    startDate: new Date(fromVal),
+                    endDate: new Date(toVal),
+                    key: 'selection'
+                  }]}
+                  onChange={handleDateRangeChange}
+                  maxDate={new Date()}
+                  showDateDisplay={false}
+                  color={theme.palette.primary.main}
+                  rangeColors={[theme.palette.primary.main]}
+                />
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 2, pt: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
+                  <Button 
+                    onClick={() => setDatePickerAnchor(null)} 
+                    variant="text" 
+                    size="small"
+                    sx={{ color: 'text.secondary' }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={applyCustom} 
+                    variant="contained" 
+                    size="small"
+                  >
+                    Apply
+                  </Button>
+                </Box>
+              </Paper>
+            </Popover>
           </Box>
 
           <Typography variant="caption" color="text.disabled"
@@ -391,32 +448,6 @@ function PeriodCard({ period, stat }: { period: string; stat: PeriodStat }) {
             : "—"}
         </Typography>
       </Box>
-    </Box>
-  );
-}
-
-// ── Date field ────────────────────────────────────────────────────────────────
-
-function DateField({ label, value, onChange, min, max }:
-  { label: string; value: string; onChange: (v: string) => void; min?: string; max?: string }) {
-  const theme = useTheme();
-  return (
-    <Box>
-      <Typography variant="overline" color="text.disabled" display="block" mb={0.75}
-        sx={{ fontSize: "0.6rem" }}>
-        {label}
-      </Typography>
-      <TextField type="datetime-local" size="small" value={value}
-        inputProps={{ min, max }}
-        onChange={(e) => onChange(e.target.value)}
-        sx={{
-          "& .MuiOutlinedInput-root": { fontSize: "0.8125rem" },
-          "& input::-webkit-calendar-picker-indicator": {
-            filter: theme.palette.mode === "dark" ? "invert(0.6)" : "none",
-            opacity: 0.55, cursor: "pointer",
-          },
-        }}
-      />
     </Box>
   );
 }

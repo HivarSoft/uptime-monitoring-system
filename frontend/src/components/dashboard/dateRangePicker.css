@@ -1,0 +1,80 @@
+/* Override react-date-range styles to match app theme */
+.rdrCalendarWrapper {
+  color: inherit;
+  font-size: 14px;
+}
+
+.rdrDateDisplayWrapper {
+  background-color: transparent;
+}
+
+.rdrDateDisplay {
+  margin: 0;
+}
+
+.rdrDateDisplayItem {
+  border-radius: 6px;
+  background-color: rgba(0, 0, 0, 0.05);
+  box-shadow: none;
+}
+
+.rdrDateDisplayItem input {
+  color: inherit;
+  font-weight: 500;
+}
+
+.rdrMonthAndYearWrapper {
+  padding-top: 0;
+}
+
+.rdrNextPrevButton {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.rdrNextPrevButton:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.rdrMonthPicker select,
+.rdrYearPicker select {
+  color: inherit;
+  font-weight: 600;
+}
+
+.rdrDayNumber span {
+  color: inherit;
+}
+
+.rdrDayPassive .rdrDayNumber span {
+  opacity: 0.3;
+}
+
+.rdrDayToday .rdrDayNumber span:after {
+  background: currentColor;
+  opacity: 0.3;
+}
+
+.rdrDayDisabled {
+  background-color: transparent;
+}
+
+.rdrDayDisabled .rdrDayNumber span {
+  opacity: 0.2;
+}
+
+.rdrDefinedRangesWrapper {
+  display: none; /* Hide predefined ranges sidebar */
+}
+
+/* Dark mode adjustments (will be handled by MUI theme context) */
+[data-theme="dark"] .rdrDateDisplayItem {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .rdrNextPrevButton {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .rdrNextPrevButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
