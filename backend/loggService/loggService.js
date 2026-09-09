@@ -39,8 +39,18 @@ const sendAlert = async (channel, payload) => {
         auth: { user: config.smtpUser, pass: config.smtpPass },
       });
       
-      // Ensure from field is properly formatted for Resend
-      const fromEmail = config.fromEmail || config.smtpUser;
+      // For Resend and similar services, fromEmail is REQUIRED since smtpUser is not an email
+      let fromEmail = config.fromEmail;
+      
+      // If no fromEmail provided, fallback to smtpUser (for traditional SMTP)
+      if (!fromEmail) {
+        fromEmail = config.smtpUser;
+      }
+      
+      // Clean up any whitespace
+      fromEmail = fromEmail?.trim();
+      
+      // Format as "Name <email@domain.com>" if not already formatted
       const from = fromEmail.includes('<') ? fromEmail : `PulseWatch <${fromEmail}>`;
       
       await transporter.sendMail({

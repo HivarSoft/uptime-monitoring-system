@@ -251,13 +251,15 @@ function CreateChannelDialog({ open, onClose, onCreated }: {
         {type === "email" && <>
           <F label="Recipient email" value={cfg.toEmail ?? ""} onChange={(v) => set("toEmail", v)} placeholder="you@example.com" />
           <Box sx={{ display: "flex", gap: 2 }}>
-            <F label="SMTP host" value={cfg.smtpHost ?? ""} onChange={(v) => set("smtpHost", v)} placeholder="smtp.gmail.com" />
+            <F label="SMTP host" value={cfg.smtpHost ?? ""} onChange={(v) => set("smtpHost", v)} placeholder="smtp.resend.com" />
             <F label="SMTP port" value={cfg.smtpPort ?? ""} onChange={(v) => set("smtpPort", v)} placeholder="587" />
           </Box>
-          <F label="SMTP username" value={cfg.smtpUser ?? ""} onChange={(v) => set("smtpUser", v)} placeholder="you@gmail.com" />
+          <F label="SMTP username" value={cfg.smtpUser ?? ""} onChange={(v) => set("smtpUser", v)} placeholder="resend or you@gmail.com" />
           <F label="SMTP password / App password" value={cfg.smtpPass ?? ""} onChange={(v) => set("smtpPass", v)} type="password" placeholder="••••••••" />
+          <F label="From email (sender address)" value={cfg.fromEmail ?? ""} onChange={(v) => set("fromEmail", v)} placeholder="noreply@yourdomain.com" />
           <Typography variant="caption" color="text.disabled" sx={{ mt: -1, fontSize: "0.7rem" }}>
             For Gmail: enable 2FA and use an App Password. <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noreferrer">Generate one here</a>
+            <br />For Resend: fromEmail is required and must be from a verified domain.
           </Typography>
         </>}
 

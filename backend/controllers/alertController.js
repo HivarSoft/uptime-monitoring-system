@@ -56,8 +56,38 @@ export const createAlertChannel = async (req, res) => {
     if (type === "email" && (!config?.smtpHost || !config?.smtpUser || !config?.smtpPass || !config?.toEmail)) {
       return res.status(400).json({ 
         success: false, 
-        message: "Email channels require smtpHost, smtpUser, smtpPass, and toEmail. Optional: fromEmail (defaults to smtpUser)" 
+        message: "Email channels require smtpHost, smtpUser, smtpPass, and toEmail. For Resend SMTP, fromEmail is also required." 
       });
+    }
+    
+    // Validate email format if provided
+    if (type === "email") {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const toEmail = (config?.toEmail || '').trim();
+      
+      if (!emailRegex.test(toEmail)) {
+        return res.status(400).json({ success: false, message: "Invalid toEmail address format" });
+      }
+      
+      // For Resend-like services (smtpUser is not an email), fromEmail is required
+      const smtpUserIsEmail = emailRegex.test((config?.smtpUser || '').trim());
+      if (!smtpUserIsEmail && !config?.fromEmail) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "fromEmail is required when smtpUser is not a valid email (e.g., for Resend SMTP, use a verified domain email)" 
+        });
+      }
+      
+      // Validate fromEmail if provided
+      if (config?.fromEmail) {
+        const fromEmail = config.fromEmail.trim();
+        if (!emailRegex.test(fromEmail)) {
+          return res.status(400).json({ 
+            success: false, 
+            message: "Invalid fromEmail address format. Use: email@yourdomain.com (must be verified in Resend)" 
+          });
+        }
+      }
     }
     if (["webhook", "slack", "discord"].includes(type) && !config?.webhookUrl) {
       return res.status(400).json({ success: false, message: `${type} channels require a webhookUrl` });
@@ -156,8 +186,26 @@ export const testAlertChannel = async (req, res) => {
         });
         await transporter.verify();
         
-        // Ensure from field is properly formatted for Resend
-        const fromEmail = config.fromEmail || config.smtpUser;
+        // For Resend and similar services, fromEmail is REQUIRED since smtpUser is not an email
+        let fromEmail = config.fromEmail;
+        
+        // If no fromEmail provided, fallback to smtpUser (for traditional SMTP)
+        if (!fromEmail) {
+          fromEmail = config.smtpUser;
+        }
+        
+        // Clean up any whitespace
+        fromEmail = fromEmail?.trim();
+        
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const emailToValidate = fromEmail.replace(/.*<(.+)>.*/, '$1'); // Extract email from "Name <email>"
+        
+        if (!emailRegex.test(emailToValidate)) {
+          throw new Error(`Invalid or missing fromEmail address. For Resend SMTP, fromEmail must be a verified email address (e.g., noreply@yourdomain.com), not "${fromEmail}"`);
+        }
+        
+        // Format as "Name <email@domain.com>" if not already formatted
         const from = fromEmail.includes('<') ? fromEmail : `PulseWatch <${fromEmail}>`;
         
         await transporter.sendMail({
