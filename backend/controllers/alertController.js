@@ -200,13 +200,26 @@ export const testAlertChannel = async (req, res) => {
         // If port is 465, use SSL (smtpSecure: true), otherwise use STARTTLS
         const secure = port === 465 ? true : (config.smtpSecure ?? false);
         
+        console.log("[testAlertChannel] Creating transporter with:", {
+          host: config.smtpHost,
+          port: port,
+          secure: secure,
+          user: config.smtpUser
+        });
+        
         const transporter = nodemailer.createTransport({
           host:   config.smtpHost,
           port:   port,
           secure: secure,
           auth:   { user: config.smtpUser, pass: config.smtpPass },
+          connectionTimeout: 10000, // 10 second timeout
+          greetingTimeout: 5000,
+          socketTimeout: 15000,
         });
+        
+        console.log("[testAlertChannel] Attempting to verify connection...");
         await transporter.verify();
+        console.log("[testAlertChannel] Connection verified successfully!");
         
         // For Resend and similar services, fromEmail is REQUIRED since smtpUser is not an email
         let fromEmail = config.fromEmail;
@@ -261,6 +274,9 @@ export const testAlertChannel = async (req, res) => {
         message = `Test message sent to Telegram chat ${config.chatId}`;
       }
     } catch (err) {
+      console.error("[testAlertChannel] Error:", err.message);
+      console.error("[testAlertChannel] Error code:", err.code);
+      console.error("[testAlertChannel] Error stack:", err.stack);
       message = err.message;
     }
 

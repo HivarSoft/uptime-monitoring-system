@@ -44,6 +44,9 @@ const sendAlert = async (channel, payload) => {
         port: port,
         secure: secure,
         auth: { user: config.smtpUser, pass: config.smtpPass },
+        connectionTimeout: 10000, // 10 second timeout
+        greetingTimeout: 5000,
+        socketTimeout: 15000,
       });
       
       // For Resend and similar services, fromEmail is REQUIRED since smtpUser is not an email
