@@ -1,7 +1,7 @@
 /* Override react-date-range styles to match app theme */
 .rdrCalendarWrapper {
   color: inherit;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .rdrDateDisplayWrapper {
@@ -25,10 +25,21 @@
 
 .rdrMonthAndYearWrapper {
   padding-top: 0;
+  height: 48px;
+}
+
+.rdrMonth {
+  padding: 0;
+}
+
+.rdrMonths {
+  gap: 0;
 }
 
 .rdrNextPrevButton {
   background: rgba(0, 0, 0, 0.05);
+  width: 28px;
+  height: 28px;
 }
 
 .rdrNextPrevButton:hover {
@@ -39,6 +50,27 @@
 .rdrYearPicker select {
   color: inherit;
   font-weight: 600;
+  font-size: 13px;
+  padding: 4px 24px 4px 6px;
+}
+
+.rdrWeekDays {
+  padding: 4px 0;
+}
+
+.rdrWeekDay {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 2;
+}
+
+.rdrDay {
+  height: 2.5em;
+}
+
+.rdrDayNumber {
+  font-size: 13px;
+  font-weight: 400;
 }
 
 .rdrDayNumber span {
@@ -52,6 +84,7 @@
 .rdrDayToday .rdrDayNumber span:after {
   background: currentColor;
   opacity: 0.3;
+  bottom: 2px;
 }
 
 .rdrDayDisabled {
@@ -64,6 +97,15 @@
 
 .rdrDefinedRangesWrapper {
   display: none; /* Hide predefined ranges sidebar */
+}
+
+/* Make it more compact */
+.rdrMonthsHorizontal {
+  gap: 0;
+}
+
+.rdrMonth {
+  width: 280px;
 }
 
 /* Dark mode adjustments (will be handled by MUI theme context) */

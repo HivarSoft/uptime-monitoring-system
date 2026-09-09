@@ -340,7 +340,7 @@ function ServicePage() {
               transformOrigin={{ vertical: 'top', horizontal: 'left' }}
               sx={{ mt: 1 }}
             >
-              <Paper sx={{ p: 2 }}>
+              <Paper sx={{ p: 1.5 }}>
                 <DateRangePicker
                   ranges={[{
                     startDate: new Date(fromVal),
@@ -348,12 +348,12 @@ function ServicePage() {
                     key: 'selection'
                   }]}
                   onChange={handleDateRangeChange}
-                  maxDate={new Date()}
+                  maxDate={new Date(new Date().setHours(23, 59, 59, 999))}
                   showDateDisplay={false}
                   color={theme.palette.primary.main}
                   rangeColors={[theme.palette.primary.main]}
                 />
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 2, pt: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 1.5, pt: 1.5, borderTop: `1px solid ${theme.palette.divider}` }}>
                   <Button 
                     onClick={() => setDatePickerAnchor(null)} 
                     variant="text" 
