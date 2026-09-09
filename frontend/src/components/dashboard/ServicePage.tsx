@@ -57,7 +57,6 @@ function presetRange(p: Preset) {
   const days = ({ "7d": 7, "30d": 30 } as Record<string, number>)[p] ?? 7;
   return { from: new Date(now.getTime() - days * 86_400_000), to: now };
 }
-const toInput = (d: Date) => d.toISOString().slice(0, 16);
 
 function statusMeta(s: number) {
   if (s === 0)             return { color: T.pending,  label: "Pending" };
@@ -104,13 +103,15 @@ function ServicePage() {
   const [loading,    setLoading]    = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [preset,     setPreset]     = useState<Preset>("6h");
-  const [fromVal,    setFromVal]    = useState(() => toInput(presetRange("6h").from));
-  const [toVal,      setToVal]      = useState(() => toInput(new Date()));
+  const [dateRange,  setDateRange]  = useState(() => {
+    const range = presetRange("6h");
+    return { from: range.from, to: range.to };
+  });
   const [datePickerAnchor, setDatePickerAnchor] = useState<HTMLButtonElement | null>(null);
 
   // keep stable ref for the interval so it reads latest preset/range
-  const rangeRef = useRef({ preset, fromVal, toVal });
-  rangeRef.current = { preset, fromVal, toVal };
+  const rangeRef = useRef({ preset, dateRange });
+  rangeRef.current = { preset, dateRange };
 
   const fetchData = useCallback(async (silent = false, from?: Date, to?: Date) => {
     if (!id) return;
@@ -126,8 +127,8 @@ function ServicePage() {
     const { from, to } = presetRange("6h");
     fetchData(false, from, to);
     const tick = setInterval(() => {
-      const { preset: p, fromVal: f, toVal: t } = rangeRef.current;
-      const r = p === "custom" ? { from: new Date(f), to: new Date(t) } : presetRange(p);
+      const { preset: p, dateRange: dr } = rangeRef.current;
+      const r = p === "custom" ? dr : presetRange(p);
       fetchData(true, r.from, r.to);
     }, 60_000);
     return () => clearInterval(tick);
@@ -136,29 +137,26 @@ function ServicePage() {
   const applyPreset = (p: Preset) => {
     setPreset(p);
     if (p !== "custom") {
-      const { from, to } = presetRange(p);
-      setFromVal(toInput(from));
-      setToVal(toInput(to));
-      fetchData(false, from, to);
+      const range = presetRange(p);
+      setDateRange(range);
+      fetchData(false, range.from, range.to);
     }
   };
 
   const applyCustom = () => {
     setPreset("custom");
-    fetchData(false, new Date(fromVal), new Date(toVal));
+    fetchData(false, dateRange.from, dateRange.to);
     setDatePickerAnchor(null); // Close popover after applying
   };
 
   const handleDateRangeChange = (ranges: any) => {
     const { startDate, endDate } = ranges.selection;
-    setFromVal(toInput(startDate));
-    setToVal(toInput(endDate));
-    setPreset("custom");
+    setDateRange({ from: startDate, to: endDate });
   };
 
   const doRefresh = () => {
-    const { preset: p, fromVal: f, toVal: t } = rangeRef.current;
-    const r = p === "custom" ? { from: new Date(f), to: new Date(t) } : presetRange(p);
+    const { preset: p, dateRange: dr } = rangeRef.current;
+    const r = p === "custom" ? dr : presetRange(p);
     fetchData(true, r.from, r.to);
   };
 
@@ -253,7 +251,7 @@ function ServicePage() {
                   animation: refreshing ? "spin 1s linear infinite" : "none" }} />
               </IconButton>
             </Tooltip>
-            <ServiceSettingsDialog data={data} onSaved={() => fetchData(true, new Date(fromVal), new Date(toVal))} />
+            <ServiceSettingsDialog data={data} onSaved={() => fetchData(true, dateRange.from, dateRange.to)} />
             <DeleteDialog type="DELSER" projectId={data.projectId?._id}
               serviceId={data._id} projectName="" serviceName={data.serviceName} />
           </Box>
@@ -328,7 +326,7 @@ function ServicePage() {
               startIcon={<CalendarToday sx={{ fontSize: 13 }} />}
             >
               {preset === "custom" 
-                ? `${new Date(fromVal).toLocaleDateString()} - ${new Date(toVal).toLocaleDateString()}`
+                ? `${dateRange.from.toLocaleDateString()} - ${dateRange.to.toLocaleDateString()}`
                 : "Pick Date Range"}
             </Button>
             
@@ -343,12 +341,12 @@ function ServicePage() {
               <Paper sx={{ p: 1.5 }}>
                 <DateRangePicker
                   ranges={[{
-                    startDate: new Date(fromVal),
-                    endDate: new Date(toVal),
+                    startDate: dateRange.from,
+                    endDate: dateRange.to,
                     key: 'selection'
                   }]}
                   onChange={handleDateRangeChange}
-                  maxDate={new Date(new Date().setHours(23, 59, 59, 999))}
+                  maxDate={new Date()}
                   showDateDisplay={false}
                   color={theme.palette.primary.main}
                   rangeColors={[theme.palette.primary.main]}
