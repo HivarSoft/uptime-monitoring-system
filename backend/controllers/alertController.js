@@ -42,6 +42,9 @@ export const getAlertChannelById = async (req, res) => {
 export const createAlertChannel = async (req, res) => {
   try {
     const { name, type, config } = req.body;
+    
+    console.log("[createAlertChannel] Request body:", { name, type, config: { ...config, smtpPass: "***" } });
+    console.log("[createAlertChannel] User ID:", req.user.id);
 
     if (!name || !type) {
       return res.status(400).json({ success: false, message: "name and type are required" });
@@ -112,6 +115,7 @@ export const createAlertChannel = async (req, res) => {
 
     return res.status(201).json({ success: true, channel: safe });
   } catch (err) {
+    console.error("[createAlertChannel] Error:", err);
     return res.status(500).json({ success: false, message: "Something went wrong" });
   }
 };
@@ -178,6 +182,16 @@ export const testAlertChannel = async (req, res) => {
 
     try {
       if (type === "email") {
+        console.log("[testAlertChannel] Email config:", {
+          smtpHost: config.smtpHost,
+          smtpPort: config.smtpPort,
+          smtpUser: config.smtpUser,
+          smtpPassLength: config.smtpPass?.length || 0,
+          smtpPassExists: !!config.smtpPass,
+          fromEmail: config.fromEmail,
+          toEmail: config.toEmail
+        });
+        
         const transporter = nodemailer.createTransport({
           host:   config.smtpHost,
           port:   config.smtpPort || 587,
